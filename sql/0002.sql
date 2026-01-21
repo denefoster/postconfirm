@@ -17,5 +17,18 @@ SELECT sender, recipients, message, created, 'migration' FROM stash_static;
 DROP TABLE IF EXISTS senders_static;
 DROP TABLE IF EXISTS stash_static;
 
+-- Create never_allow table for addresses excluded from global allowlist
+CREATE TABLE IF NOT EXISTS never_allow (
+    email VARCHAR(255) PRIMARY KEY,
+    reason VARCHAR(255),
+    created TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+INSERT INTO never_allow (email, reason) VALUES
+    ('iab@iab.org', 'protected role address'),
+    ('iab@ietf.org', 'protected role address'),
+    ('iesg@ietf.org', 'protected role address')
+ON CONFLICT DO NOTHING;
+
 -- Update schema version
 UPDATE config SET value = '2' WHERE name = 'schema';
