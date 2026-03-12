@@ -33,14 +33,20 @@ class Remailer:
         return self.smtp
 
     def sendmail(self, recipients: list[str], message: str, sender: str = None) -> any:
-        connection = self.get_connection()
+        """Create fresh connection for each send to avoid concurrency issues"""
+        smtp = SMTP(host=self.host, port=self.port, timeout=30)
 
         try:
-            return connection.sendmail(
-                sender or self.sender_from, recipients, message.encode("UTF-8")
-            )
+            result = smtp.sendmail(sender or self.sender_from, recipients, message.encode("UTF-8"))
+            return result
         except Exception as e:
             logger.error("Exception in SMTP: %(reason)s", {"reason": str(e)})
+            raise
+        finally:
+            try:
+                smtp.quit()
+            except:
+                pass
 
     def __enter__(self) -> any:
         return self
