@@ -2,21 +2,16 @@ import logging
 import random
 import re
 import string
-from typing import Union, Optional
-
 from email.header import decode_header
+from typing import Optional, Union
 
 import chevron
 from kilter.protocol import Accept, Discard, Reject
 from kilter.service import Runner, Session
 
-from src.sender import Sender, get_sender
-from src.challenge import get_challenge
-
 from src import services
-
-import asyncio
-
+from src.challenge import get_challenge
+from src.sender import Sender, get_sender
 
 logger = logging.getLogger(__name__)
 
@@ -122,10 +117,7 @@ async def send_challenge(sender: Sender, subject: str, recipients: list[str], re
 
         challenge_message = reform_email_text(headers, [message_text])
 
-        with services["remailer"] as mailer:
-            await mailer.sendmail([sender.email], challenge_message)
-#            # This should probably have a sender
-#            await mailer.sendmail([sender.email], challenge_message)
+        await services["remailer"].sendmail([sender.email], challenge_message)
 
 
 def get_challenge_token_from_subject(subject: str) -> str:
@@ -204,19 +196,17 @@ def extract_reference(mail_headers: list[dict]) -> str:
     return ''.join(random.sample(IDENTIFIER_CHARS, 10))
 
 
-def release_messages(sender: Sender) -> None:
+async def release_messages(sender: Sender) -> None:
     """
     Releases the stashed messages relating to the sender.
     """
 
-    with services["remailer"] as mailer:
-        for (recipients, message) in sender.unstash_messages():
-            logging.debug("Releasing message from %(sender)s to %(recipients)s", {
-                "sender": sender.get_email(),
-                "recipients": ', '.join(recipients)
-            })
-            # Not sure if we should be including the sender here.
-            mailer.sendmail(recipients, message, sender.get_email())
+    for (recipients, message) in sender.unstash_messages():
+        logging.debug("Releasing message from %(sender)s to %(recipients)s", {
+            "sender": sender.get_email(),
+            "recipients": ', '.join(recipients)
+        })
+        await services["remailer"].sendmail(recipients, message, sender.get_email())
 
 
 @Runner
@@ -331,7 +321,7 @@ async def handle(session: Session) -> Union[Accept, Reject, Discard]:
             sender.set_action("accept")
 
             # Release the messages
-            release_messages(sender)
+            await release_messages(sender)
 
         else:
             logger.debug("Message is a response but we are not confirming the sender")

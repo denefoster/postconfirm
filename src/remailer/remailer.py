@@ -1,11 +1,8 @@
 import logging
-#from smtplib import SMTP, SMTPServerDisconnected
 
-from aiosmtplib import SMTP, SMTPServerDisconnected
-
+from aiosmtplib import SMTP
 
 from config import Config
-
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +16,12 @@ class Remailer:
     * `smtp_host` (defaults to "localhost") as the host to send via
     * `smtp_port` (defaults to 25) as the port to connect to on the `smtp_host`
     * `remailer_sender` (defaults to "<>") as the default envelope sender
+    * `smtp_username` (optional) username for SASL PLAIN authentication
+    * `smtp_password` (optional) password for SASL PLAIN authentication
+
+    When `smtp_username` and `smtp_password` are both set, the connection
+    will negotiate STARTTLS before authenticating. Both must be set or both
+    must be unset.
     """
 
     def __init__(self, app_config: Config):
@@ -27,55 +30,26 @@ class Remailer:
         self.helo_host = app_config.get("smtp_helo_host", "localhost")
         self.sender_from = app_config.get("remail_sender", "<>")
 
-        self.smtp = None
+        self.username = app_config.get("smtp_username", None)
+        self.password = app_config.get("smtp_password", None)
 
-    def get_connection(self) -> SMTP:
-        if not self._check_smtp_connection():
-            self._init_smtp_connection()
-
-        return self.smtp
+        if bool(self.username) != bool(self.password):
+            raise ValueError(
+                "smtp_username and smtp_password must both be set or both be unset"
+            )
 
     async def sendmail(self, recipients: list[str], message: str, sender: str = None) -> any:
-        """Create fresh connection for each send to avoid concurrency issues"""
-        smtp = SMTP(host=self.host, port=self.port, timeout=30)
-
+        if sender is None:
+            sender = self.sender_from
         try:
-            result = smtp.sendmail(sender or self.sender_from, recipients, message.encode("UTF-8"))
-            return result
+            async with SMTP(
+                hostname=self.host, port=self.port, local_hostname=self.helo_host
+            ) as smtp:
+                if self.username:
+                    await smtp.starttls()
+                    await smtp.login(self.username, self.password)
+                return await smtp.sendmail(sender, recipients, message.encode("UTF-8"))
         except Exception as e:
             logger.error("Exception in SMTP: %(reason)s", {"reason": str(e)})
-            raise
-        finally:
-            try:
-                smtp.quit()
-            except:
-                pass
-
-    def __enter__(self) -> any:
-        return self
-
-    def __exit__(self, type, value, traceback) -> bool:
-        if self.smtp:
-            try:
-                self.smtp.quit()
-            except SMTPServerDisconnected:
-                pass
-
-            self.smtp = None
-
-        return True
-
-    def _check_smtp_connection(self) -> bool:
-        if not self.smtp:
             return False
 
-        try:
-            self.smtp.docmd("NOOP")
-            return True
-
-        except SMTPServerDisconnected:
-            self.smtp = None
-            return False
-
-    def _init_smtp_connection(self) -> None:
-        self.smtp = SMTP(host=self.host, port=self.port, local_hostname=self.helo_host)
