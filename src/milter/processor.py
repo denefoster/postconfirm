@@ -15,6 +15,8 @@ from src.challenge import get_challenge
 
 from src import services
 
+import asyncio
+
 
 logger = logging.getLogger(__name__)
 
