@@ -44,6 +44,7 @@ class Remailer:
         try:
             async with SMTP(
                 hostname=self.host, port=self.port, local_hostname=self.helo_host
+                use_tls=False, start_tls=False
             ) as smtp:
                 return await smtp.sendmail(sender, recipients, message.encode("UTF-8"))
         except Exception as e:
