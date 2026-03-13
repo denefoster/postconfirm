@@ -90,7 +90,7 @@ def reform_email_text(headers: list, body_chunks: list) -> str:
     return f"{LINE_SEP.join(form_header(header) for header in headers)}{LINE_SEP}{LINE_SEP}{''.join(body_chunks)}"
 
 
-def send_challenge(sender: Sender, subject: str, recipients: list[str], reference: str) -> None:
+async def send_challenge(sender: Sender, subject: str, recipients: list[str], reference: str) -> None:
     """
     Send the challenge email to the sender, with the reference
     and then update the sender to indicate this.
@@ -305,7 +305,7 @@ async def handle(session: Session) -> Union[Accept, Reject, Discard]:
 
         if action in actions_to_challenge:
             logger.debug("Message flagged for challenge and sender -- %(sender)s -- requires challenge", {"sender": mail_from})
-            send_challenge(sender, cleaned_subject, challenge_recipients, challenge_reference)
+            await send_challenge(sender, cleaned_subject, challenge_recipients, challenge_reference)
 
         return Discard()
 
