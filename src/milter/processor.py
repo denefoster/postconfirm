@@ -17,6 +17,8 @@ from src import services
 
 import asyncio
 
+from remailer import sendmail
+
 
 logger = logging.getLogger(__name__)
 
@@ -122,10 +124,10 @@ def send_challenge(sender: Sender, subject: str, recipients: list[str], referenc
 
         challenge_message = reform_email_text(headers, [message_text])
 
-        loop = asyncio.get_event_loop()
-        coroutine = mailer.sendmail([sender.email], challenge_message)
-        loop.run_until_complete(coroutine)
-#        with services["remailer"] as mailer:
+        with services["remailer"] as mailer:
+            loop = asyncio.get_event_loop()
+            coroutine = mailer.sendmail([sender.email], challenge_message)
+            loop.run_until_complete(coroutine)
 #            # This should probably have a sender
 #            await mailer.sendmail([sender.email], challenge_message)
 
