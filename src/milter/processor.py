@@ -17,8 +17,6 @@ from src import services
 
 import asyncio
 
-from remailer import sendmail
-
 
 logger = logging.getLogger(__name__)
 
