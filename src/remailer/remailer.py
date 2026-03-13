@@ -45,9 +45,6 @@ class Remailer:
             async with SMTP(
                 hostname=self.host, port=self.port, local_hostname=self.helo_host
             ) as smtp:
-                if self.username:
-                    await smtp.starttls()
-                    await smtp.login(self.username, self.password)
                 return await smtp.sendmail(sender, recipients, message.encode("UTF-8"))
         except Exception as e:
             logger.error("Exception in SMTP: %(reason)s", {"reason": str(e)})
