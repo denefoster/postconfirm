@@ -123,9 +123,7 @@ def send_challenge(sender: Sender, subject: str, recipients: list[str], referenc
         challenge_message = reform_email_text(headers, [message_text])
 
         with services["remailer"] as mailer:
-            loop = asyncio.get_event_loop()
-            coroutine = mailer.sendmail([sender.email], challenge_message)
-            loop.run_until_complete(coroutine)
+            await mailer.sendmail([sender.email], challenge_message)
 #            # This should probably have a sender
 #            await mailer.sendmail([sender.email], challenge_message)
 
