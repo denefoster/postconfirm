@@ -126,12 +126,12 @@ def send_challenge(sender: Sender, subject: str, recipients: list[str], referenc
         challenge_message = reform_email_text(headers, [message_text])
 
         async def send_with_sendmail():
-            smtp_client = SMTP(hostname="127.0.0.1", port=25)
+            smtp_client = SMTP(hostname="postfix-internal", port=25)
             await smtp_client.connect()
             await smtp_client.sendmail(challenge_address, sender.email, challenge_message)
             await smtp_client.quit()
 
-        asyncio.run(send_with_sendmail())
+        await send_with_sendmail()
 
 def get_challenge_token_from_subject(subject: str) -> str:
     """
