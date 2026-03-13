@@ -15,6 +15,11 @@ from src.challenge import get_challenge
 
 from src import services
 
+import asyncio
+from email.message import EmailMessage
+
+from aiosmtplib import SMTP
+
 
 logger = logging.getLogger(__name__)
 
@@ -120,10 +125,13 @@ def send_challenge(sender: Sender, subject: str, recipients: list[str], referenc
 
         challenge_message = reform_email_text(headers, [message_text])
 
-        with services["remailer"] as mailer:
-            # This should probably have a sender
-            mailer.sendmail([sender.email], challenge_message)
+        async def send_with_sendmail():
+            smtp_client = SMTP(hostname="127.0.0.1", port=25)
+            await smtp_client.connect()
+            await smtp_client.sendmail(challenge_address, sender.email, challenge_message)
+            await smtp_client.quit()
 
+        asyncio.run(send_with_sendmail())
 
 def get_challenge_token_from_subject(subject: str) -> str:
     """
@@ -338,3 +346,4 @@ async def handle(session: Session) -> Union[Accept, Reject, Discard]:
 
     # Anything else is just accepted
     return Accept()
+
