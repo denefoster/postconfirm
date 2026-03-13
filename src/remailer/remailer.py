@@ -1,5 +1,8 @@
 import logging
-from smtplib import SMTP, SMTPServerDisconnected
+#from smtplib import SMTP, SMTPServerDisconnected
+
+from aiosmtplib import SMTP, SMTPServerDisconnected
+
 
 from config import Config
 
