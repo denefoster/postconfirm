@@ -326,6 +326,7 @@ async def handle(session: Session) -> Union[Accept, Reject, Discard]:
         elif action == "accept":
             logger.debug("Message is outbound challenge")
             await release_messages(sender)
+            return Accept()
         else:
             logger.debug("Message is a response but we are not confirming the sender")
 
