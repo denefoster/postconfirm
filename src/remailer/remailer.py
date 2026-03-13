@@ -35,7 +35,7 @@ class Remailer:
 
         return self.smtp
 
-    def sendmail(self, recipients: list[str], message: str, sender: str = None) -> any:
+    async def sendmail(self, recipients: list[str], message: str, sender: str = None) -> any:
         """Create fresh connection for each send to avoid concurrency issues"""
         smtp = SMTP(host=self.host, port=self.port, timeout=30)
 

@@ -90,7 +90,7 @@ def reform_email_text(headers: list, body_chunks: list) -> str:
     return f"{LINE_SEP.join(form_header(header) for header in headers)}{LINE_SEP}{LINE_SEP}{''.join(body_chunks)}"
 
 
-async def send_challenge(sender: Sender, subject: str, recipients: list[str], reference: str) -> None:
+def send_challenge(sender: Sender, subject: str, recipients: list[str], reference: str) -> None:
     """
     Send the challenge email to the sender, with the reference
     and then update the sender to indicate this.
@@ -122,7 +122,7 @@ async def send_challenge(sender: Sender, subject: str, recipients: list[str], re
 
         with services["remailer"] as mailer:
             # This should probably have a sender
-            mailer.sendmail([sender.email], challenge_message)
+            await mailer.sendmail([sender.email], challenge_message)
 
 
 def get_challenge_token_from_subject(subject: str) -> str:
@@ -305,7 +305,7 @@ async def handle(session: Session) -> Union[Accept, Reject, Discard]:
 
         if action in actions_to_challenge:
             logger.debug("Message flagged for challenge and sender -- %(sender)s -- requires challenge", {"sender": mail_from})
-            await send_challenge(sender, cleaned_subject, challenge_recipients, challenge_reference)
+            send_challenge(sender, cleaned_subject, challenge_recipients, challenge_reference)
 
         return Discard()
 
