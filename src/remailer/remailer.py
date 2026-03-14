@@ -51,7 +51,10 @@ class Remailer:
                 hostname=self.host,
                 port=self.port,
                 local_hostname=self.helo_host,
-                validate_certs=bool(self.validate_certs)
+                if self.validate_certs.lower() in ['true', '1', 't', 'y', 'yes']
+                    validate_certs=True
+                else:
+                    validate_certs=False
             ) as smtp:
                 if self.username:
                     await smtp.starttls()
