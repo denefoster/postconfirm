@@ -30,7 +30,16 @@ class Remailer:
         self.host = app_config.get("smtp_host", "localhost")
         self.port = app_config.get("smtp_port", 25)
         self.helo_host = app_config.get("smtp_helo_host", "localhost")
-        self.validate_certs = app_config.get("smtp_validate_certs", "False")
+        if app_config.get("smtp_validate_certs", "False").lower() in [
+            "true",
+            "1",
+            "t",
+            "y",
+            "yes",
+        ]:
+            self.validate_certs = True
+        else:
+            self.validate_certs = False
         self.sender_from = app_config.get("remail_sender", "<>")
 
         self.username = app_config.get("smtp_username", None)
@@ -51,10 +60,7 @@ class Remailer:
                 hostname=self.host,
                 port=self.port,
                 local_hostname=self.helo_host,
-                if self.validate_certs.lower() in ['true', '1', 't', 'y', 'yes']
-                    validate_certs=True
-                else:
-                    validate_certs=False
+                validate_certs=self.validate_certs
             ) as smtp:
                 if self.username:
                     await smtp.starttls()
