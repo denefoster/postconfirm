@@ -241,8 +241,6 @@ async def handle(session: Session) -> Union[Accept, Reject, Discard]:
     sender = get_sender(mail_from)
     remail_sender = services["app_config"].get("remail_sender")
 
-    logger.debug(sender)
-    logger.debug(remail_sender)
     # Then we can gather the recipients. The order is determined by the
     # SMTP protocol.
     mail_recipients = [
@@ -264,6 +262,9 @@ async def handle(session: Session) -> Union[Accept, Reject, Discard]:
 
     # Now we can determine the course of action
     #
+    if mail_from == remail_sender:
+        logger.debug("Outbound challenge")
+        return Accept()
     if challenge_recipients and should_drop:
         logger.debug("Message flagged for challenge but also matched drop conditions")
         return Discard()
@@ -328,9 +329,6 @@ async def handle(session: Session) -> Union[Accept, Reject, Discard]:
             await release_messages(sender)
 
         else:
-            if sender == remail_sender:
-                logger.debug("Message is outbound challenge")
-                return Accept()
             logger.debug("Message is a response but we are not confirming the sender")
 
         # Always discard the message at this stage
