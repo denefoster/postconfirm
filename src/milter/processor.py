@@ -241,6 +241,8 @@ async def handle(session: Session) -> Union[Accept, Reject, Discard]:
     sender = get_sender(mail_from)
     remail_sender = services["app_config"].get("remail_sender")
 
+    logger.debug(sender)
+    logger.debug(remail_sender)
     # Then we can gather the recipients. The order is determined by the
     # SMTP protocol.
     mail_recipients = [
