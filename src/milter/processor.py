@@ -262,11 +262,7 @@ async def handle(session: Session) -> Union[Accept, Reject, Discard]:
 
     # Now we can determine the course of action
     #
-    # If the sender is ourselves issuing a challenge, just accept.
-    if sender == remail_sender:
-        return Accept()
-
-    elif challenge_recipients and should_drop:
+    if challenge_recipients and should_drop:
         logger.debug("Message flagged for challenge but also matched drop conditions")
         return Discard()
 
@@ -330,6 +326,9 @@ async def handle(session: Session) -> Union[Accept, Reject, Discard]:
             await release_messages(sender)
 
         else:
+            if sender == remail_sender:
+                logger.debug("Message is outbound challenge")
+                return Accept()
             logger.debug("Message is a response but we are not confirming the sender")
 
         # Always discard the message at this stage
